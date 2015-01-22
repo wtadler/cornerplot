@@ -72,21 +72,22 @@ lims = nan(nDims,2);
 for i = 1:nDims
     lims(i,:) = [min(data(:,i)) max(data(:,i))];
     
-    ax(i,i)=subplot(nDims,nDims, sub2ind([nDims nDims],i,i));
+    ax(i,i)=subplot_tight(1+nDims,1+nDims, sub2ind([1+nDims 1+nDims],1+i,i));
     [n,x]=hist(data(:,i), hist_bins);
     plot(x,n/sum(n),'k-')
+    set(gca,'yticklabel',[],'xlim',lims(i,:),axes_defaults);
+
+    if i~=nDims
+        set(gca,'xticklabel',[])
+    end
     
     if ~isempty(truths)
-        yl = get(gca, 'ylim');
-        set(gca,'yticklabel',[],'xlim',lims(i,:),axes_defaults);
         hold on
-        plot([truths(i) truths(i)], yl, 'k-', 'linewidth',linewidth)
+        plot([truths(i) truths(i)], [0 1], 'k-', 'linewidth',linewidth)
     end
     
     if ~isempty(names)
-        if i==1
-            ylabel(names{i})
-        end
+        ylabel(sprintf('p(%s)',names{i}))
         if i==nDims
             xlabel(names{i})
         end
@@ -99,10 +100,10 @@ if nDims > 1
     for p1 = 1:nDims-1
         for p2 = p1+1:nDims
             [~, density, X, Y] = kde2d([data(:,p1) data(:,p2)],res,[lims(p1,1) lims(p2,1)],[lims(p1,2) lims(p2,2)]);
-            ax(p2,p1)=subplot(nDims,nDims, sub2ind([nDims nDims],p1,p2));
+            ax(p2,p1)=subplot_tight(1+nDims,1+nDims, sub2ind([1+nDims 1+nDims],1+p1,p2));
             contour(X,Y,density, lines)
             
-            set(gca,'xlim',lims(p1,:),'ylim',lims(p2,:), axes_defaults);
+            set(gca,'yticklabel',[],'xticklabel',[],'xlim',lims(p1,:),'ylim',lims(p2,:), axes_defaults);
             
             if ~isempty(truths)
                 yl = get(gca,'ylim');
@@ -114,9 +115,11 @@ if nDims > 1
             if ~isempty(names)
                 if p1==1
                     ylabel(names{p2})
+                    set(gca,'yticklabelmode','auto')
                 end
                 if p2==nDims
                     xlabel(names{p1})
+                    set(gca,'xticklabelmode','auto')
                 end
             end
         end

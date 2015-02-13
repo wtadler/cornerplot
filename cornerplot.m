@@ -79,7 +79,7 @@ end
 % plotting parameters
 fig = figure;
 ax = nan(nDims);
-hist_bins = 20;
+hist_bins = 40;
 lines = 10;
 res = 2^6; % defines grid for which kde2d will compute density. must be a power of 2.
 linewidth = 1;
@@ -87,7 +87,9 @@ axes_defaults = struct('tickdirmode','manual',...
     'tickdir','out',...
     'ticklength',[.035 .035],...
     'box','off',...
-    'color','none');
+    'color','none',...
+    'xticklabel',[],...
+    'yticklabel',[]);
 
 % plot histograms
 for i = 1:nDims
@@ -98,10 +100,10 @@ for i = 1:nDims
     ax(i,i) = tight_subplot(1+nDims,1+nDims, i, 1+i);
     [n,x] = hist(data(:,i), hist_bins);
     plot(x,n/sum(n),'k-')
-    set(gca,'yticklabel',[],'xlim',bounds(:,i),'ylim',[0 max(n/sum(n))],axes_defaults);
+    set(gca,'xlim',bounds(:,i),'ylim',[0 max(n/sum(n))],axes_defaults);
     
-    if i ~= nDims
-        set(gca,'xticklabel',[])
+    if i == nDims
+        set(gca,'xticklabel','auto')
     end
     
     if ~isempty(truths)
@@ -129,7 +131,7 @@ if nDims > 1
             ax(d2,d1) = tight_subplot(1+nDims,1+nDims, d2, 1+d1);
             contour(X,Y,density, lines)
             
-            set(gca,'yticklabel',[],'xticklabel',[],'xlim',bounds(:,d1),'ylim',bounds(:,d2), axes_defaults);
+            set(gca,'xlim',bounds(:,d1),'ylim',bounds(:,d2), axes_defaults);
             
             if ~isempty(truths)
                 yl = get(gca,'ylim');
@@ -167,19 +169,19 @@ if nDims > 1
 end
 end
 
-function h=tight_subplot(m,n,subplot_row,subplot_col)
+function h=tight_subplot(m,n,row,col)
 % adapted from subplot_tight
 % (mathworks.com/matlabcentral/fileexchange/30884-controllable-tight-subplot/)
 % by Nikolay S. (http://vision.technion.ac.il/~kolian1/)
 
-margins = [.015, .015];
+gutter = [.015, .015];
 
-height = (1-(m+1)*margins(1))/m;
-width = (1-(n+1)*margins(2))/n;
+height = (1-(m+1)*gutter(1))/m;% plot height
+width = (1-(n+1)*gutter(2))/n; % plot width
+bottom = (m-row)*(height+gutter(1))+gutter(1); % bottom pos
+left = col*(width+gutter(2))-width;            % left pos
 
-bottom =(m-subplot_row)*(height+margins(1))+margins(1); % merged subplot bottom position
-left =subplot_col*(width+margins(2))-width;              % merged subplot left position
-pos_vec=[left bottom width height];
+pos_vec= [left bottom width height];
 
 h=subplot('Position',pos_vec);
 end

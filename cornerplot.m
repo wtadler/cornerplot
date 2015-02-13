@@ -48,6 +48,7 @@ end
 % assign names and truths if given
 names = {};
 truths = [];
+bounds = [];
 bounds_supplied = true;
 
 if nargin > 1
@@ -71,21 +72,22 @@ if nargin > 1
 end
 
 if isempty(bounds)
-    bounds = nan(nDims,2);
+    bounds = nan(2,nDims);
     bounds_supplied = false;
 end
 
 % plotting parameters
 fig = figure;
 ax = nan(nDims);
-hist_bins = 100;
+hist_bins = 20;
 lines = 10;
 res = 2^6; % defines grid for which kde2d will compute density. must be a power of 2.
 linewidth = 1;
 axes_defaults = struct('tickdirmode','manual',...
     'tickdir','out',...
     'ticklength',[.035 .035],...
-    'box','off');
+    'box','off',...
+    'color','none');
 
 % plot histograms
 for i = 1:nDims
@@ -93,7 +95,7 @@ for i = 1:nDims
         bounds(:,i) = [min(data(:,i)) max(data(:,i))];
     end
     
-    ax(i,i) = subplot_tight(1+nDims,1+nDims, sub2ind([1+nDims 1+nDims],1+i,i));
+    ax(i,i) = tight_subplot(1+nDims,1+nDims, i, 1+i);
     [n,x] = hist(data(:,i), hist_bins);
     plot(x,n/sum(n),'k-')
     set(gca,'yticklabel',[],'xlim',bounds(:,i),'ylim',[0 max(n/sum(n))],axes_defaults);
@@ -108,7 +110,9 @@ for i = 1:nDims
     end
     
     if ~isempty(names)
-        ylabel(sprintf('p(%s)',names{i}))
+        if i == 1
+            ylabel(names{i});
+        end
         if i == nDims
             xlabel(names{i})
         end
@@ -118,10 +122,11 @@ end
 
 % plot projections
 if nDims > 1
-    for d1 = 1:nDims-1
-        for d2 = d1+1:nDims
+    for d1 = 1:nDims-1 % col
+        for d2 = d1+1:nDims % row
             [~, density, X, Y] = kde2d([data(:,d1) data(:,d2)],res,[bounds(1,d1) bounds(1,d2)],[bounds(2,d1) bounds(2,d2)]);
-            ax(d2,d1) = subplot_tight(1+nDims,1+nDims, sub2ind([1+nDims 1+nDims],1+d1,d2));
+
+            ax(d2,d1) = tight_subplot(1+nDims,1+nDims, d2, 1+d1);
             contour(X,Y,density, lines)
             
             set(gca,'yticklabel',[],'xticklabel',[],'xlim',bounds(:,d1),'ylim',bounds(:,d2), axes_defaults);
@@ -162,3 +167,19 @@ if nDims > 1
 end
 end
 
+function h=tight_subplot(m,n,subplot_row,subplot_col)
+% adapted from subplot_tight
+% (mathworks.com/matlabcentral/fileexchange/30884-controllable-tight-subplot/)
+% by Nikolay S. (http://vision.technion.ac.il/~kolian1/)
+
+margins = [.015, .015];
+
+height = (1-(m+1)*margins(1))/m;
+width = (1-(n+1)*margins(2))/n;
+
+bottom =(m-subplot_row)*(height+margins(1))+margins(1); % merged subplot bottom position
+left =subplot_col*(width+margins(2))-width;              % merged subplot left position
+pos_vec=[left bottom width height];
+
+h=subplot('Position',pos_vec);
+end

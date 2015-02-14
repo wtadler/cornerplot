@@ -103,7 +103,7 @@ for i = 1:nDims
     set(gca,'xlim',bounds(:,i),'ylim',[0 max(n/sum(n))],axes_defaults);
     
     if i == nDims
-        set(gca,'xticklabel','auto')
+        set(gca,'xticklabelmode','auto')
     end
     
     if ~isempty(truths)

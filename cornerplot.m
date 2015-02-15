@@ -100,7 +100,7 @@ for i = 1:nDims
     ax(i,i) = tight_subplot(1+nDims,1+nDims, i, 1+i);
     [n,x] = hist(data(:,i), hist_bins);
     plot(x,n/sum(n),'k-')
-    set(gca,'xlim',bounds(:,i),'ylim',[0 max(n/sum(n))],axes_defaults);
+    set(gca,'xlim',bounds(:,i),'ylim',[0 max(n/sum(n))],axes_defaults,'ytick',[]);
     
     if i == nDims
         set(gca,'xticklabelmode','auto')

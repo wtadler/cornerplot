@@ -38,7 +38,7 @@ if length(size(data)) ~= 2
     error('x must be 2D.')
 end
 
-nDims = min(size(data));
+nDims = min(size(data));  % this assumes that you have more samples than dimensions in your data. Hopefully this is a safe assumption!
 
 % make sure columns are the dimensions of the data
 if nDims ~= size(data,2)
@@ -78,7 +78,8 @@ end
 
 % plotting parameters
 fig = figure;
-ax = nan(nDims);
+top_margin = 0; % this adds some number of empty splots on top of each column. useful for plotting other statistics across parameter values (eg, marginal log likelihood)
+ax = nan(nDims+top_margin,nDims);
 hist_bins = 40;
 lines = 10;
 res = 2^6; % defines grid for which kde2d will compute density. must be a power of 2.
@@ -96,9 +97,14 @@ for i = 1:nDims
     if ~bounds_supplied
         bounds(:,i) = [min(data(:,i)) max(data(:,i))];
     end
+    truncated_data = data;
+    truncated_data(truncated_data(:,i)<bounds(1,i) | truncated_data(:,i)>bounds(2,i),i) = nan;
+
+    ax(i,i) = tight_subplot(2+nDims, 1+nDims, i, i+1);
+    set(gca,'visible','off','xlim',bounds(:,i))
+    ax(i+top_margin,i) = tight_subplot(1+top_margin+nDims,1+nDims, i+top_margin, i+1);
     
-    ax(i,i) = tight_subplot(1+nDims,1+nDims, i, 1+i);
-    [n,x] = hist(data(:,i), hist_bins);
+    [n,x] = hist(truncated_data(:,i), hist_bins);
     plot(x,n/sum(n),'k-')
     set(gca,'xlim',bounds(:,i),'ylim',[0 max(n/sum(n))],axes_defaults,'ytick',[]);
     
@@ -128,7 +134,7 @@ if nDims > 1
         for d2 = d1+1:nDims % row
             [~, density, X, Y] = kde2d([data(:,d1) data(:,d2)],res,[bounds(1,d1) bounds(1,d2)],[bounds(2,d1) bounds(2,d2)]);
 
-            ax(d2,d1) = tight_subplot(1+nDims,1+nDims, d2, 1+d1);
+            ax(d2+top_margin,d1) = tight_subplot(top_margin+1+nDims,1+nDims, d2+top_margin, 1+d1);
             contour(X,Y,density, lines)
             
             set(gca,'xlim',bounds(:,d1),'ylim',bounds(:,d2), axes_defaults);
@@ -154,13 +160,14 @@ if nDims > 1
             end
         end
         
-        % link axes
-        row = ax(1+d1,:);
+%         % link axes
+        row = ax(1+top_margin+d1,:);
         row = row(~isnan(row));
-        row = row(1:end-1);
+        row = row(1:d1);
         
         col = ax(:,d1);
         col = col(~isnan(col));
+        col = col(1:end);
         
         linkaxes(row, 'y');
         linkaxes(col, 'x');

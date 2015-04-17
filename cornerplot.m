@@ -16,6 +16,12 @@ function [fig,ax]=cornerplot(data, varargin)
 % each dimension. BOUNDS is a 2 by nDimensions matrix where the first row is the
 % lower bound for each dimension, and the second row is the upper bound.
 %
+% CORNERPLOT(DATA,NAMES,TRUTHS,BOUNDS,TOP_MARGIN) plots a number, defined by TOP_MARGIN,
+% of empty axes at the top of each column. This can be useful for plotting other statistics
+% across parameter values (eg, marginal log likelihood).
+%
+%
+% Output:
 % FIG is the handle for the figure, and AX is a
 % nDimensions-by-nDimensions array of all subplot handles.
 %
@@ -50,6 +56,7 @@ names = {};
 truths = [];
 bounds = [];
 bounds_supplied = true;
+top_margin = 0;
 
 if nargin > 1
     names = varargin{1};
@@ -67,6 +74,9 @@ if nargin > 1
             if ~isempty(bounds) && ~(isfloat(bounds) && all(size(bounds) == [2 nDims]))
                 error('BOUNDS must be a 2-by-nDims matrix.')
             end
+            if nargin > 4
+                top_margin = varargin{4};
+            end
         end
     end
 end
@@ -78,7 +88,6 @@ end
 
 % plotting parameters
 fig = figure;
-top_margin = 0; % this adds some number of empty splots on top of each column. useful for plotting other statistics across parameter values (eg, marginal log likelihood)
 ax = nan(nDims+top_margin,nDims);
 hist_bins = 40;
 lines = 10;

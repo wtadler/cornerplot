@@ -8,7 +8,7 @@ Inspired by [corner.py](https://github.com/dfm/corner.py) by [Dan Foreman-Mackey
 
 # Usage
 <img src="http://wtadler.com/picdrop/cornerplot.png" width=30% align="left" />
-You can obtain a plot like that pictured to the left with `cornerplot(randn(500,3))`.
+You can obtain a plot like that pictured to the left with `cornerplot(randn(500, 3))`.
 <br />
 <br />
 <br />
@@ -21,7 +21,7 @@ You can obtain a plot like that pictured to the left with `cornerplot(randn(500,
 
 <img src="http://wtadler.com/picdrop/cornerplot_labels.png" width=30% align="left" />
 
-You can also label parameters, and mark true parameter values, as in `cornerplot(randn(500,3), {'a', 'b', 'c'}, randn(1,3))`
+You can also label parameters and mark true parameter values, as in `cornerplot(randn(500, 3), {'a', 'b', 'c'}, randn(1, 3))`
 <br />
 <br />
 <br />

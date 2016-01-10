@@ -88,6 +88,7 @@ end
 
 % plotting parameters
 fig = figure;
+set(gcf, 'color', 'w')
 ax = nan(nDims+top_margin,nDims);
 hist_bins = 40;
 lines = 10;

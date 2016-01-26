@@ -16,9 +16,6 @@ function [fig,ax]=cornerplot(data, varargin)
 % each dimension. BOUNDS is a 2 by nDimensions matrix where the first row is the
 % lower bound for each dimension, and the second row is the upper bound.
 %
-% CORNERPLOT(DATA,NAMES,TRUTHS,BOUNDS,TOP_MARGIN) plots a number, defined by TOP_MARGIN,
-% of empty axes at the top of each column. This can be useful for plotting other statistics
-% across parameter values (eg, marginal log likelihood).
 %
 %
 % Output:
@@ -56,7 +53,9 @@ names = {};
 truths = [];
 bounds = [];
 bounds_supplied = true;
-top_margin = 0;
+
+gutter = [.02 .02];
+margins = [.1 .01 .12 .01];
 
 if nargin > 1
     names = varargin{1};
@@ -74,9 +73,6 @@ if nargin > 1
             if ~isempty(bounds) && ~(isfloat(bounds) && all(size(bounds) == [2 nDims]))
                 error('BOUNDS must be a 2-by-nDims matrix.')
             end
-            if nargin > 4
-                top_margin = varargin{4};
-            end
         end
     end
 end
@@ -89,7 +85,7 @@ end
 % plotting parameters
 fig = figure;
 set(gcf, 'color', 'w')
-ax = nan(nDims+top_margin,nDims);
+ax = nan(nDims,nDims);
 hist_bins = 40;
 lines = 10;
 res = 2^6; % defines grid for which kde2d will compute density. must be a power of 2.
@@ -109,13 +105,10 @@ for i = 1:nDims
     truncated_data = data;
     truncated_data(truncated_data(:,i)<bounds(1,i) | truncated_data(:,i)>bounds(2,i),i) = nan;
 
-    ax(i,i) = tight_subplot(2+nDims, 1+nDims, i, i+1);
-    set(gca,'visible','off','xlim',bounds(:,i))
-    ax(i+top_margin,i) = tight_subplot(1+top_margin+nDims,1+nDims, i+top_margin, i+1);
+    ax(i,i) = tight_subplot(nDims, nDims, i, i, gutter, margins);
     
-    [n,x] = hist(truncated_data(:,i), hist_bins);
-    plot(x,n/sum(n),'k-')
-    set(gca,'xlim',bounds(:,i),'ylim',[0 max(n/sum(n))],axes_defaults,'ytick',[]);
+    h=histogram(truncated_data(:,i), hist_bins, 'normalization', 'probability', 'displaystyle', 'stairs', 'edgecolor', 'k');
+    set(gca,'xlim',bounds(:,i),'ylim', [0 max(h.Values)], axes_defaults,'ytick',[]);
     
     if i == nDims
         set(gca,'xticklabelmode','auto')
@@ -143,7 +136,7 @@ if nDims > 1
         for d2 = d1+1:nDims % row
             [~, density, X, Y] = kde2d([data(:,d1) data(:,d2)],res,[bounds(1,d1) bounds(1,d2)],[bounds(2,d1) bounds(2,d2)]);
 
-            ax(d2+top_margin,d1) = tight_subplot(top_margin+1+nDims,1+nDims, d2+top_margin, 1+d1);
+            ax(d2,d1) = tight_subplot(nDims, nDims, d2, d1, gutter, margins);
             contour(X,Y,density, lines)
             
             set(gca,'xlim',bounds(:,d1),'ylim',bounds(:,d2), axes_defaults);
@@ -170,7 +163,7 @@ if nDims > 1
         end
         
 %         % link axes
-        row = ax(1+top_margin+d1,:);
+        row = ax(1+d1,:);
         row = row(~isnan(row));
         row = row(1:d1);
         
@@ -185,19 +178,56 @@ if nDims > 1
 end
 end
 
-function h=tight_subplot(m,n,row,col)
-% adapted from subplot_tight
-% (mathworks.com/matlabcentral/fileexchange/30884-controllable-tight-subplot/)
-% by Nikolay S. (http://vision.technion.ac.il/~kolian1/)
+function h=tight_subplot(m, n, row, col, gutter, margins, varargin)
+%TIGHT_SUBPLOT Replacement for SUBPLOT. Easier to specify size of grid, row/col, gutter, and margins
+%
+% TIGHT_SUBPLOT(M, N, ROW, COL) places a subplot on an M by N grid, at a
+% specified ROW and COL. ROW and COL can also be ranges
+%
+% TIGHT_SUBPLOT(M, N, ROW, COL, GUTTER=.002) indicates the width of the spacing
+% between subplots, in terms of proportion of the figure size. If GUTTER is
+% a 2-length vector, the first number specifies the width of the spacing
+% between columns, and the second number specifies the width of the spacing
+% between rows. If GUTTER is a scalar, it specifies both widths. For
+% instance, GUTTER = .05 will make each gutter equal to 5% of the figure
+% width or height.
+%
+% TIGHT_SUBPLOT(M, N, ROW, COL, GUTTER=.002, MARGINS=[.06 .01 .04 .04]) indicates the margin on
+% all four sides of the subplots. MARGINS = [LEFT RIGHT BOTTOM TOP]. This
+% allows room for titles, labels, etc.
+%
+% Will Adler 2015
+% will@wtadler.com
 
-gutter = [.015, .015];
+if nargin<5 || isempty(gutter)
+    gutter = [.002, .002]; %horizontal, vertical
+end
 
-height = (1-(m+1)*gutter(1))/m;% plot height
-width = (1-(n+1)*gutter(2))/n; % plot width
-bottom = (m-row)*(height+gutter(1))+gutter(1); % bottom pos
-left = col*(width+gutter(2))-width;            % left pos
+if length(gutter)==1
+    gutter(2)=gutter;
+elseif length(gutter) > 2
+    error('GUTTER must be of length 1 or 2')
+end
+
+if nargin<6 || isempty(margins)
+    margins = [.06 .01 .04 .04]; % L R B T
+end
+
+Lmargin = margins(1);
+Rmargin = margins(2);
+Bmargin = margins(3);
+Tmargin = margins(4);
+
+unit_height = (1-Bmargin-Tmargin-(m-1)*gutter(2))/m;
+height = length(row)*unit_height + (length(row)-1)*gutter(2);
+
+unit_width = (1-Lmargin-Rmargin-(n-1)*gutter(1))/n;
+width = length(col)*unit_width + (length(col)-1)*gutter(1);
+
+bottom = (m-max(row))*(unit_height+gutter(2))+Bmargin;
+left   = (min(col)-1)*(unit_width +gutter(1))+Lmargin;
 
 pos_vec= [left bottom width height];
 
-h=subplot('Position',pos_vec);
+h=subplot('Position', pos_vec, varargin{:});
 end

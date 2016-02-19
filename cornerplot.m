@@ -16,6 +16,9 @@ function [fig,ax]=cornerplot(data, varargin)
 % each dimension. BOUNDS is a 2 by nDimensions matrix where the first row is the
 % lower bound for each dimension, and the second row is the upper bound.
 %
+% CORNERPLOT(DATA,NAMES,TRUTHS,BOUNDS,TOP_MARGIN) plots a number, defined by TOP_MARGIN,
+% of empty axes at the top of each column. This can be useful for plotting other statistics
+% across parameter values (eg, marginal log likelihood).
 %
 %
 % Output:
@@ -53,6 +56,7 @@ names = {};
 truths = [];
 bounds = [];
 bounds_supplied = true;
+top_margin = 0;
 
 gutter = [.02 .02];
 margins = [.1 .01 .12 .01];
@@ -73,11 +77,14 @@ if nargin > 1
             if ~isempty(bounds) && ~(isfloat(bounds) && all(size(bounds) == [2 nDims]))
                 error('BOUNDS must be a 2-by-nDims matrix.')
             end
+            if nargin > 4
+                top_margin = varargin{4};
+            end
         end
     end
 end
 
-if isempty(bounds)
+if isempty(bounds) | all(bounds==0)
     bounds = nan(2,nDims);
     bounds_supplied = false;
 end
@@ -85,7 +92,7 @@ end
 % plotting parameters
 fig = figure;
 set(gcf, 'color', 'w')
-ax = nan(nDims,nDims);
+ax = nan(nDims+top_margin,nDims);
 hist_bins = 40;
 lines = 10;
 res = 2^6; % defines grid for which kde2d will compute density. must be a power of 2.
@@ -102,10 +109,16 @@ for i = 1:nDims
     if ~bounds_supplied
         bounds(:,i) = [min(data(:,i)) max(data(:,i))];
     end
+    
+    for t = 1:top_margin
+        ax(i-1+t,i) = tight_subplot(nDims+top_margin, nDims, i-1+t, i, gutter, margins);
+        set(gca,'visible','off','xlim',bounds(:,i));
+    end
+
     truncated_data = data;
     truncated_data(truncated_data(:,i)<bounds(1,i) | truncated_data(:,i)>bounds(2,i),i) = nan;
-
-    ax(i,i) = tight_subplot(nDims, nDims, i, i, gutter, margins);
+    
+    ax(i+top_margin,i) = tight_subplot(nDims+top_margin, nDims, i+top_margin, i, gutter, margins);
     
     h=histogram(truncated_data(:,i), hist_bins, 'normalization', 'probability', 'displaystyle', 'stairs', 'edgecolor', 'k');
     set(gca,'xlim',bounds(:,i),'ylim', [0 max(h.Values)], axes_defaults,'ytick',[]);
@@ -136,7 +149,7 @@ if nDims > 1
         for d2 = d1+1:nDims % row
             [~, density, X, Y] = kde2d([data(:,d1) data(:,d2)],res,[bounds(1,d1) bounds(1,d2)],[bounds(2,d1) bounds(2,d2)]);
 
-            ax(d2,d1) = tight_subplot(nDims, nDims, d2, d1, gutter, margins);
+            ax(d2+top_margin,d1) = tight_subplot(nDims+top_margin, nDims, d2+top_margin, d1, gutter, margins);
             contour(X,Y,density, lines)
             
             set(gca,'xlim',bounds(:,d1),'ylim',bounds(:,d2), axes_defaults);
@@ -163,7 +176,7 @@ if nDims > 1
         end
         
 %         % link axes
-        row = ax(1+d1,:);
+        row = ax(1+top_margin+d1,:);
         row = row(~isnan(row));
         row = row(1:d1);
         

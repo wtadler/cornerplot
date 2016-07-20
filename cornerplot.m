@@ -25,7 +25,7 @@ function [fig,ax]=cornerplot(data, varargin)
 % FIG is the handle for the figure, and AX is a
 % nDimensions-by-nDimensions array of all subplot handles.
 %
-% Inspired by triangle.py (github.com/dfm/triangle.py)
+% Inspired by corner (github.com/dfm/corner.py)
 % by Dan Foreman-Mackey (dan.iel.fm).
 %
 % Requires kde2d
@@ -58,7 +58,7 @@ bounds = [];
 bounds_supplied = true;
 top_margin = 0;
 
-gutter = [.02 .02];
+gutter = [.004 .004];
 margins = [.1 .01 .12 .01];
 
 if nargin > 1

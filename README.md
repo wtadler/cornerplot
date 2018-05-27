@@ -18,11 +18,14 @@ You can obtain a plot like that pictured to the left with `cornerplot(randn(500,
 <br />
 <br />
 <br />
+<br />
 
 
 <img src="http://wtadler.com/picdrop/cornerplot_labels.png" width=30% align="left" />
 
 You can also label parameters and mark true parameter values, as in `cornerplot(randn(500, 3), {'a', 'b', 'c'}, randn(1, 3))`.
+<br />
+<br />
 <br />
 <br />
 <br />
